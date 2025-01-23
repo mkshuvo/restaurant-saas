@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 # Use Node.js LTS version
 FROM node:20-alpine
-=======
-# Use Node.js 22.13.0 as the base image
-FROM node:22.13.0
->>>>>>> 3daa16a2067b98c5a0918049f1fd9b34c58e75cf
 
 # Set working directory
 WORKDIR /usr/src/app
