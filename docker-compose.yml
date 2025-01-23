@@ -5,37 +5,60 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile
-    image: myapp:latest
+    image: ghcr.io/${GITHUB_USERNAME}/restaurant-saas:${IMAGE_TAG:-latest}
     container_name: myapp
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://user:password@db:5432/mydatabase
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy
     networks:
       - restaurant-network
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 500M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   db:
     image: postgres:13-alpine
     container_name: myapp-db
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=mydatabase
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
     networks:
       - restaurant-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d mydatabase"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.7'
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
   restaurant-network:
